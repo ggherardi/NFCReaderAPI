@@ -26,49 +26,45 @@ namespace NFCTicketing
         /// </summary>
         public EncryptableSmartTicket ValidateTicket()
         {
-            try
+            _timestamp = DateTime.Now;
+            _ticket.UsageTimestamp = _timestamp;
+            if (_ticket.SessionValidation == null)
             {
-                _timestamp = DateTime.Now;
-                _ticket.UsageTimestamp = _timestamp;
-                if (_ticket.SessionValidation == null)
+                ResetTicketValidation();
+            }
+            else
+            {
+                TimeSpan timeSinceFirstValidation = _timestamp - (DateTime)_ticket.SessionValidation;
+                if (timeSinceFirstValidation.TotalMinutes < _ticket.Type.DurationInMinutes)
                 {
+                    ManageValidTicket();
+                }
+                else if (_ticket.Type.NextTicketUpgrade == null || timeSinceFirstValidation.TotalMinutes > _ticket.Type.NextTicketUpgrade.DurationInMinutes)
+                {
+                    // Ticket is expired for both the current ticket type and the upgraded ticket type
                     ResetTicketValidation();
                 }
                 else
                 {
-                    TimeSpan timeSinceFirstValidation = _timestamp - (DateTime)_ticket.SessionValidation;
-                    if (timeSinceFirstValidation.TotalMinutes < _ticket.Type.DurationInMinutes)
+                    if ((_timestamp - (DateTime)_ticket.CurrentValidation).TotalMinutes < SmartTicketType.BIT.DurationInMinutes)
                     {
                         ManageValidTicket();
                     }
-                    else if (_ticket.Type.NextTicketUpgrade == null || timeSinceFirstValidation.TotalMinutes > _ticket.Type.NextTicketUpgrade.DurationInMinutes)
-                    {
-                        // Ticket is expired for both the current ticket type and the upgraded ticket type
-                        ResetTicketValidation();
-                    }
                     else
                     {
-                        if ((_timestamp - (DateTime)_ticket.CurrentValidation).TotalMinutes < SmartTicketType.BIT.DurationInMinutes)
+                        if (_ticket.Type.NextTicketUpgrade != null && _ticket.SessionExpense + SmartTicketType.BIT.Cost >= _ticket.Type.NextTicketUpgrade.Cost)
                         {
-                            ManageValidTicket();
+                            // Upgrade the ticket since it would be more cost efficient than buying a new base ticket
+                            UpgradeTicket();
                         }
                         else
                         {
-                            if (_ticket.Type.NextTicketUpgrade != null && _ticket.SessionExpense + SmartTicketType.BIT.Cost >= _ticket.Type.NextTicketUpgrade.Cost)
-                            {
-                                // Upgrade the ticket since it would be more cost efficient than buying a new base ticket
-                                UpgradeTicket();
-                            }
-                            else
-                            {
-                                ValidateBaseTicket();
-                            }
+                            ValidateBaseTicket();
                         }
                     }
                 }
-                RegisterTicketUpdate();
             }
-            catch (Exception) { }
+            RegisterTicketUpdate();
             return _ticket;
         }
 
@@ -97,6 +93,10 @@ namespace NFCTicketing
                 _ticket.CurrentValidation = _timestamp;
                 RegisterValidation();
             }
+            else
+            {
+                // I need to add a different type of object to return, so I can add messages: i.e. I could add here a message that says that the ticket didn't need to be validated!
+            }
         }
 
         private void ValidateBaseTicket()
@@ -110,7 +110,7 @@ namespace NFCTicketing
         {
             if (_ticket.Credit - amount < 0)
             {
-                throw new Exception("Insufficient credit.");
+                throw new Exception($"Credito non sufficiente per l'operazione (Richiesti: {amount} €. Credito disponibile: {Math.Round(_ticket.Credit, 2)} €");
             }
             _ticket.Credit -= amount;
             _ticket.SessionExpense += amount;
