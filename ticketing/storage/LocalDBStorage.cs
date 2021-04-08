@@ -45,12 +45,26 @@ namespace NFCTicketing
                 string sessionValidationParameter = "@sessionValidation";
                 string sessionExpenseParameter = "@sessionExpense";
                 string cardIDParameter = "@cardid";
-                string commandString = $"UPDATE SmartTicket SET credit = {creditParameter}, ticket_type = {ticketTypeParameter}, current_validation = {currentValidationParameter}, session_validation = {sessionValidationParameter}, session_expense = {sessionExpenseParameter} WHERE card_id = {cardIDParameter}";
+                string commandString = $"UPDATE SmartTicket SET credit = {creditParameter}, ticket_type = {ticketTypeParameter}, current_validation = {currentValidationParameter}, session_validation = {sessionValidationParameter ?? "NULL"}, session_expense = {sessionExpenseParameter} WHERE card_id = {cardIDParameter}";
                 SqlCommand command = new SqlCommand(commandString, sqlConnection);                
                 command.Parameters.AddWithValue(creditParameter, ticket.Credit);
                 command.Parameters.AddWithValue(ticketTypeParameter, ticket.TicketTypeName);
-                command.Parameters.AddWithValue(currentValidationParameter, ticket.CurrentValidation);
-                command.Parameters.AddWithValue(sessionValidationParameter, ticket.SessionValidation);
+                if (ticket.CurrentValidation != null)
+                {
+                    command.Parameters.AddWithValue(currentValidationParameter, ticket.CurrentValidation);
+                }
+                else
+                {
+                    command.Parameters.AddWithValue(currentValidationParameter, DBNull.Value);
+                }
+                if (ticket.SessionValidation != null)
+                {
+                    command.Parameters.AddWithValue(sessionValidationParameter, ticket.SessionValidation);
+                }
+                else
+                {
+                    command.Parameters.AddWithValue(sessionValidationParameter, DBNull.Value);
+                }
                 command.Parameters.AddWithValue(sessionExpenseParameter, ticket.SessionExpense);
                 command.Parameters.AddWithValue(cardIDParameter, BitConverter.ToString(ticket.CardID));
                 command.ExecuteNonQuery();

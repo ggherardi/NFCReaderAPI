@@ -54,6 +54,7 @@ namespace NFCTicketing
         public void InitNewTicket()
         {
             _ticket = new EncryptableSmartTicket() { Credit = 0, TicketTypeName = SmartTicketType.BIT.Name, CurrentValidation = null, SessionValidation = null, SessionExpense = 0, UsageTimestamp = DateTime.Now, CardID = _cardID };
+            _storage.RegisterTicketUpdate(_ticket);
             WriteTicket();
         }
 

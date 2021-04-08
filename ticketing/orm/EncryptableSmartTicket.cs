@@ -11,7 +11,7 @@ namespace NFCTicketing
     public class EncryptableSmartTicket
     {
         public decimal Credit { get; set; }        
-        public string TicketTypeName { get => Type.Name; set => Type = TicketEnumeration.GetAll<SmartTicketType>().FirstOrDefault(t => t.Name == value); }
+        public string TicketTypeName { get => Type?.Name; set => Type = TicketEnumeration.GetAll<SmartTicketType>().FirstOrDefault(t => t.Name == value); }
         [JsonIgnore]
         public SmartTicketType Type { get; set; }        
         public DateTime? CurrentValidation { get; set; }
